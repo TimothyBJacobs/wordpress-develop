@@ -876,8 +876,7 @@ class WP_REST_Server {
 			return $result;
 		}
 
-		$method = $request->get_method();
-		$path   = $request->get_route();
+		$path = $request->get_route();
 
 		$with_namespace = array();
 
@@ -888,10 +887,45 @@ class WP_REST_Server {
 		}
 
 		if ( $with_namespace ) {
-			$routes = array_merge( ...$with_namespace );
+			$matched_all = false;
+			$routes      = array_merge( ...$with_namespace );
 		} else {
-			$routes = $this->get_routes();
+			$matched_all = true;
+			$routes      = $this->get_routes();
 		}
+
+		$response = $this->match( $request, $routes );
+
+		if ( ! $response && ! $matched_all ) {
+			$response = $this->match( $request, $this->get_routes() );
+		}
+
+		if ( $response ) {
+			return $response;
+		}
+
+		return $this->error_to_response(
+			new WP_Error(
+				'rest_no_route',
+				__( 'No route was found matching the URL and request method' ),
+				array( 'status' => 404 )
+			)
+		);
+	}
+
+	/**
+	 * Matches the request object to a route and generates the response.
+	 *
+	 * @since 5.4.0
+	 *
+	 * @param WP_REST_Request $request Request to attempt dispatching.
+	 * @param array $routes
+	 *
+	 * @return WP_REST_Response|null Response returned by the callback, or null if no match was found.
+	 */
+	private function match( $request, $routes ) {
+		$method = $request->get_method();
+		$path   = $request->get_route();
 
 		foreach ( $routes as $route => $handlers ) {
 			$match = preg_match( '@^' . $route . '$@i', $path, $matches );
@@ -1051,13 +1085,7 @@ class WP_REST_Server {
 			}
 		}
 
-		return $this->error_to_response(
-			new WP_Error(
-				'rest_no_route',
-				__( 'No route was found matching the URL and request method' ),
-				array( 'status' => 404 )
-			)
-		);
+		return null;
 	}
 
 	/**
