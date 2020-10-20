@@ -317,9 +317,21 @@ function create_initial_rest_routes() {
 	$controller = new WP_REST_Block_Directory_Controller();
 	$controller->register_routes();
 
+	//Sidebars
+	$sidebars = new WP_REST_Sidebars_Controller();
+	$sidebars->register_routes();
+
+	// Widgets
+	$widgets = new WP_REST_Widgets_Controller();
+	$widgets->register_routes();
+
+	// Widget types
+	$widget_types = new WP_REST_Widget_Types_Controller();
+	$widget_types->register_routes();
+
 	// Site Health
 	$site_health = WP_Site_Health::get_instance();
-	$controller = new WP_REST_Site_Health_Controller( $site_health );
+	$controller  = new WP_REST_Site_Health_Controller( $site_health );
 	$controller->register_routes();
 }
 
